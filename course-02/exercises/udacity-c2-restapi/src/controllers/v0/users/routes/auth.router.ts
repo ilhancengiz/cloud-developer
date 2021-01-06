@@ -9,19 +9,6 @@ import { NextFunction } from 'connect';
 import * as EmailValidator from 'email-validator';
 
 const router: Router = Router();
-
-async function generatePassword(plainTextPassword: string): Promise<string> {
-    //@TODO Use Bcrypt to Generated Salted Hashed Passwords
-}
-
-async function comparePasswords(plainTextPassword: string, hash: string): Promise<boolean> {
-    //@TODO Use Bcrypt to Compare your password to your Salted Hashed Password
-}
-
-function generateJWT(user: User): string {
-    //@TODO Use jwt to create a new JWT Payload containing
-}
-
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
     return next();
     // if (!req.headers || !req.headers.authorization){
@@ -42,6 +29,19 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     //   }
     //   return next();
     // });
+}
+
+/*
+async function generatePassword(plainTextPassword: string): Promise<string> {
+    //@TODO Use Bcrypt to Generated Salted Hashed Passwords
+}
+
+async function comparePasswords(plainTextPassword: string, hash: string): Promise<boolean> {
+    //@TODO Use Bcrypt to Compare your password to your Salted Hashed Password
+}
+
+function generateJWT(user: User): string {
+    //@TODO Use jwt to create a new JWT Payload containing
 }
 
 router.get('/verification', 
@@ -122,6 +122,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     res.status(201).send({token: jwt, user: savedUser.short()});
 });
+*/
 
 router.get('/', async (req: Request, res: Response) => {
     res.send('auth')
