@@ -11,15 +11,14 @@ export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId
-
-  const itemDeleted = await deleteTodo(todoId)
+  await deleteTodo(todoId)
 
   return {
-    statusCode: 200,
+    statusCode: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': true
     },
-    body: JSON.stringify(itemDeleted)
+    body: ''
   }
 }

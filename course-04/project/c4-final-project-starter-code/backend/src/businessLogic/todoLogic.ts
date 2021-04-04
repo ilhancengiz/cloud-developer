@@ -25,7 +25,6 @@ export async function createTodo(
     name: createTodoRequest.name,
     dueDate: createTodoRequest.dueDate,
     createdAt: new Date().toISOString()
-    //imageUrl: `https://${bucketName}.s3.amazonaws.com/${imageId}`
   })
 }
 
@@ -47,6 +46,6 @@ export async function updateTodoItemImage(
   return todoAccess.updateTodoItemImage(todoId, imageUrl)
 }
 
-export async function deleteTodo(todoId: string): Promise<TodoItem> {
+export async function deleteTodo(todoId: string): Promise<void> {
   return todoAccess.deleteTodo(todoId)
 }

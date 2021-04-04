@@ -15,85 +15,70 @@ export class TodoAccess {
   ) {}
 
   async getTodosByUser(userId: string): Promise<TodoItem[]> {
-    const result = await this.docClient
-      .query({
-        TableName: this.todosTable,
-        IndexName: this.todosTableUserIdIndex,
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: {
-          ':userId': userId
-        }
-      })
-      .promise()
+    const queryParams = {
+      TableName: this.todosTable,
+      IndexName: this.todosTableUserIdIndex,
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': userId
+      }
+    }
 
+    const result = await this.docClient.query(queryParams).promise()
     return result.Items as TodoItem[]
   }
 
-  async getTodoById(todoId: string): Promise<TodoItem> {
-    const result = await this.docClient
-      .get({
-        TableName: this.todosTable,
-        Key: {
-          todoId: todoId
-        }
-      })
-      .promise()
-
-    const item = result.Item
-    return item as TodoItem
-  }
-
   async createTodo(item: TodoItem): Promise<TodoItem> {
-    await this.docClient
-      .put({
-        TableName: this.todosTable,
-        Item: item
-      })
-      .promise()
+    const createParams = {
+      TableName: this.todosTable,
+      Item: item
+    }
 
+    await this.docClient.put(createParams).promise()
     return item
   }
 
-  async deleteTodo(todoId: string): Promise<TodoItem> {
-    const item = await this.getTodoById(todoId)
+  async deleteTodo(todoId: string): Promise<void> {
+    const deleteParams = {
+      TableName: this.todosTable,
+      Key: {
+        todoId
+      }
+    }
 
-    await this.docClient
-      .delete({
-        TableName: this.todosTable,
-        Key: {
-          todoId: item.todoId
-        }
-      })
-      .promise()
-
-    return item
+    await this.docClient.delete(deleteParams).promise()
   }
 
   async updateTodo(todoId: string, updatedTodo: TodoUpdate): Promise<void> {
-    await this.docClient
-      .update({
-        TableName: this.todosTable,
-        Key: {
-          todoId: todoId
-        }
-        //todo : update logic
-      })
-      .promise()
+    const updateParams = {
+      TableName: this.todosTable,
+      Key: {
+        todoId
+      },
+      UpdateExpression: 'set name = :name, done = :done, dueDate = :dueDate',
+      ExpressionAttributeValues: {
+        ':name': updatedTodo.name,
+        ':done': updatedTodo.done,
+        ':dueDate': updatedTodo.dueDate
+      }
+    }
+    await this.docClient.update(updateParams).promise()
 
     return
   }
 
   async updateTodoItemImage(todoId: string, imageUrl: string): Promise<void> {
-    await this.docClient
-      .update({
-        TableName: this.todosTable,
-        Key: {
-          todoId: todoId
-        }
-        //todo : update logic
-      })
-      .promise()
-
+    const updateImageParams = {
+      TableName: this.todosTable,
+      Key: {
+        todoId
+      },
+      UpdateExpression: 'set attachmentUrl = :imageUrl',
+      ExpressionAttributeValues: {
+        ':imageUrl': imageUrl
+      }
+    }
+    await this.docClient.update(updateImageParams).promise()
     return
   }
 }
