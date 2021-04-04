@@ -1,5 +1,4 @@
-service:
-  name: serverless-todo-app
+service: serverless-todo-app
 
 plugins:
   - serverless-webpack
@@ -9,20 +8,18 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs8.10
-
+  runtime: nodejs10.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
-
-tracing:
-  lambda: true
-  apiGateway: true
-
-environment:
-  TODOS_TABLE: Todos-${self:provider.stage}
-  TODOS_USERID_INDEX: TodosUserIdIndex
-  TODO_IMAGES_S3_BUCKET: serverless-todo-images-iceng54789-${self:provider.stage}
-  SIGNED_URL_EXPIRATION: 300
+  tracing:
+    lambda: true
+    apiGateway: true
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    TODOS_TABLE: TodoTable-${self:provider.stage}
+    TODOS_USERID_INDEX: TodosUserIdIndex
+    TODO_IMAGES_S3_BUCKET: serverless-todo-images-iceng54789-${self:provider.stage}
+    SIGNED_URL_EXPIRATION: 300
 
 custom:
   topicName: imagesTopic-${self:provider.stage}
@@ -92,6 +89,7 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
+          - dynamodb:GetItem
           - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
@@ -105,8 +103,13 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
+          - dynamodb:GetItem
           - dynamodb:DeleteItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - s3:DeleteObject
+        Resource: arn:aws:s3:::${self:provider.environment.TODO_IMAGES_S3_BUCKET}/*
 
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
@@ -118,12 +121,13 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
+          - dynamodb:GetItem
           - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
       - Effect: Allow
         Action:
           - s3:PutObject
-        Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*
+        Resource: arn:aws:s3:::${self:provider.environment.TODO_IMAGES_S3_BUCKET}/*
 
 resources:
   Resources:
@@ -146,24 +150,10 @@ resources:
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: createdAt
-            AttributeType: S
-          - AttributeName: name
-            AttributeType: S
-          - AttributeName: dueDate
-            AttributeType: S
-          - AttributeName: done
-            AttributeType: S
-          - AttributeName: attachmentUrl
-            AttributeType: S
         KeySchema:
           - AttributeName: todoId
             KeyType: HASH
-          - AttributeName: createdAt
-            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-        StreamSpecification:
-          StreamViewType: NEW_IMAGE
         TableName: ${self:provider.environment.TODOS_TABLE}
         GlobalSecondaryIndexes:
           - IndexName: ${self:provider.environment.TODOS_USERID_INDEX}

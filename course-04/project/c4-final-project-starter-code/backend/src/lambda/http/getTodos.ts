@@ -13,7 +13,6 @@ export const handler: APIGatewayProxyHandler = async (
 ): Promise<APIGatewayProxyResult> => {
   const userId = getUserId(event)
   const todoList = await getTodosByUser(userId)
-
   if (todoList.length !== 0) {
     return {
       statusCode: 200,
@@ -22,19 +21,8 @@ export const handler: APIGatewayProxyHandler = async (
         'Access-Control-Allow-Credentials': true
       },
       body: JSON.stringify({
-        todoList
+        items: todoList
       })
     }
-  }
-
-  return {
-    statusCode: 404,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': true
-    },
-    body: JSON.stringify({
-      error: 'Group does not exist'
-    })
   }
 }

@@ -28,6 +28,18 @@ export class TodoAccess {
     return result.Items as TodoItem[]
   }
 
+  async getTodoBydId(todoId: string): Promise<TodoItem> {
+    const getParams = {
+      TableName: this.todosTable,
+      Key: {
+        todoId: todoId
+      }
+    }
+
+    const result = await this.docClient.get(getParams).promise()
+    return result.Item as TodoItem
+  }
+
   async createTodo(item: TodoItem): Promise<TodoItem> {
     const createParams = {
       TableName: this.todosTable,
@@ -42,7 +54,7 @@ export class TodoAccess {
     const deleteParams = {
       TableName: this.todosTable,
       Key: {
-        todoId
+        todoId: todoId
       }
     }
 
@@ -53,11 +65,15 @@ export class TodoAccess {
     const updateParams = {
       TableName: this.todosTable,
       Key: {
-        todoId
+        todoId: todoId
       },
-      UpdateExpression: 'set name = :name, done = :done, dueDate = :dueDate',
+      UpdateExpression:
+        'set #name = :todoName, done = :done, dueDate = :dueDate',
+      ExpressionAttributeNames: {
+        '#name': 'name'
+      },
       ExpressionAttributeValues: {
-        ':name': updatedTodo.name,
+        ':todoName': updatedTodo.name,
         ':done': updatedTodo.done,
         ':dueDate': updatedTodo.dueDate
       }
@@ -71,7 +87,7 @@ export class TodoAccess {
     const updateImageParams = {
       TableName: this.todosTable,
       Key: {
-        todoId
+        todoId: todoId
       },
       UpdateExpression: 'set attachmentUrl = :imageUrl',
       ExpressionAttributeValues: {

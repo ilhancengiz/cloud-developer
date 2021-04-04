@@ -110,7 +110,7 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
 
   if (!signingKey) {
     throw new Error(
-      `Unable to find a signing key that matches '${decodedToken.header.kid}'`
+      `Unable to find a signing key that matches '${decodedToken.header.kid}`
     )
   }
 
