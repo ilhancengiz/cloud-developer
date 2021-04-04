@@ -16,7 +16,7 @@ const s3 = new XAWS.S3({
   signatureVersion: 'v4'
 })
 
-const bucketName = process.env.IMAGES_S3_BUCKET
+const bucketName = process.env.TODO_IMAGES_S3_BUCKET
 const urlExpiration = process.env.SIGNED_URL_EXPIRATION
 
 export const handler: APIGatewayProxyHandler = async (
@@ -26,12 +26,11 @@ export const handler: APIGatewayProxyHandler = async (
   const imageId = uuid.v4()
   const url = getUploadUrl(imageId)
   const imageUrl = `https://${bucketName}.s3.amazonaws.com/${imageId}`
-  const todoItem = await updateTodoItemImage(todoId, imageUrl)
+  await updateTodoItemImage(todoId, imageUrl)
 
   return {
     statusCode: 200,
     body: JSON.stringify({
-      item: todoItem,
       uploadUrl: url
     })
   }
