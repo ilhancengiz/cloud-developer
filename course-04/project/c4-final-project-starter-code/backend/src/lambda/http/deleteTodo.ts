@@ -1,10 +1,87 @@
 import 'source-map-support/register'
 
-import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const todoId = event.pathParameters.todoId
+import * as AWS from 'aws-sdk'
+import * as AWSXRay from 'aws-xray-sdk'
+import { deleteTodo, getTodoItem } from '../../businessLogic/todoLogic'
+import { createLogger } from '../../utils/logger'
+import { getUserId } from '../utils'
+import * as middy from 'middy'
 
-  // TODO: Remove a TODO item by id
-  return undefined
+const logger = createLogger('deleteTodo')
+const XAWS = AWSXRay.captureAWS(AWS)
+const s3 = new XAWS.S3({
+  signatureVersion: 'v4'
+})
+
+const bucketName = process.env.TODO_IMAGES_S3_BUCKET
+
+export const handler = middy(
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    const todoId = event.pathParameters.todoId
+    const todoItem = await getTodoItem(todoId)
+    const isItemExists = !!todoItem
+    const userId = getUserId(event)
+
+    if (!isItemExists) {
+      logger.error(
+        `${userId} attempted to delete non-existing todo item with id of : ${todoId}`
+      )
+      return {
+        statusCode: 404,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true
+        },
+        body: JSON.stringify({
+          error: `${todoId} item not exists.`
+        })
+      }
+    }
+
+    const todoOwner = todoItem.userId
+
+    if (todoOwner !== userId) {
+      logger.error(
+        `${userId} attempted to delete ${todoId} with owner of ${todoOwner}`
+      )
+      return {
+        statusCode: 403,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true
+        },
+        body: 'only owner can delete this item.'
+      }
+    }
+
+    await deleteTodo(todoId)
+
+    if (todoItem.attachmentUrl) {
+      await deleteFromS3(todoId)
+    }
+
+    return {
+      statusCode: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true
+      },
+      body: ''
+    }
+  }
+)
+
+async function deleteFromS3(todoId: string): Promise<void> {
+  const params = {
+    Bucket: bucketName,
+    Key: todoId
+  }
+
+  try {
+    await s3.deleteObject(params).promise()
+  } catch (err) {
+    logger.error(`Cant delete image of todo id : ${todoId}`, err)
+  }
 }
