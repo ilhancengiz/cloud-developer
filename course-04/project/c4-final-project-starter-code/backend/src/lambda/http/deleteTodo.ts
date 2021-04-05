@@ -20,9 +20,9 @@ const bucketName = process.env.TODO_IMAGES_S3_BUCKET
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const todoId = event.pathParameters.todoId
-    const todoItem = await getTodoItem(todoId)
-    const isItemExists = !!todoItem
     const userId = getUserId(event)
+    const todoItem = await getTodoItem(userId, todoId)
+    const isItemExists = !!todoItem
 
     if (!isItemExists) {
       logger.error(
@@ -40,23 +40,7 @@ export const handler = middy(
       }
     }
 
-    const todoOwner = todoItem.userId
-
-    if (todoOwner !== userId) {
-      logger.error(
-        `${userId} attempted to delete ${todoId} with owner of ${todoOwner}`
-      )
-      return {
-        statusCode: 403,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Credentials': true
-        },
-        body: 'only owner can delete this item.'
-      }
-    }
-
-    await deleteTodo(todoId)
+    await deleteTodo(userId, todoId)
 
     if (todoItem.attachmentUrl) {
       await deleteFromS3(todoId)
