@@ -10,14 +10,12 @@ import { TodoUpdate } from '../models/TodoUpdate'
 export class TodoAccess {
   constructor(
     private readonly docClient: DocumentClient = createDynamoDBClient(),
-    private readonly todosTable = process.env.TODOS_TABLE,
-    private readonly todosTableUserIdIndex = process.env.TODOS_USERID_INDEX
+    private readonly todosTable = process.env.TODOS_TABLE
   ) {}
 
   async getTodosByUser(userId: string): Promise<TodoItem[]> {
     const queryParams = {
       TableName: this.todosTable,
-      IndexName: this.todosTableUserIdIndex,
       KeyConditionExpression: 'userId = :userId',
       ExpressionAttributeValues: {
         ':userId': userId
@@ -28,10 +26,11 @@ export class TodoAccess {
     return result.Items as TodoItem[]
   }
 
-  async getTodoBydId(todoId: string): Promise<TodoItem> {
+  async getTodoBydId(userId: string, todoId: string): Promise<TodoItem> {
     const getParams = {
       TableName: this.todosTable,
       Key: {
+        userId: userId,
         todoId: todoId
       }
     }
@@ -50,10 +49,11 @@ export class TodoAccess {
     return item
   }
 
-  async deleteTodo(todoId: string): Promise<void> {
+  async deleteTodo(userId: string, todoId: string): Promise<void> {
     const deleteParams = {
       TableName: this.todosTable,
       Key: {
+        userId: userId,
         todoId: todoId
       }
     }
@@ -61,10 +61,15 @@ export class TodoAccess {
     await this.docClient.delete(deleteParams).promise()
   }
 
-  async updateTodo(todoId: string, updatedTodo: TodoUpdate): Promise<void> {
+  async updateTodo(
+    userId: string,
+    todoId: string,
+    updatedTodo: TodoUpdate
+  ): Promise<void> {
     const updateParams = {
       TableName: this.todosTable,
       Key: {
+        userId: userId,
         todoId: todoId
       },
       UpdateExpression:
@@ -83,10 +88,15 @@ export class TodoAccess {
     return
   }
 
-  async updateTodoItemImage(todoId: string, imageUrl: string): Promise<void> {
+  async updateTodoItemImage(
+    userId: string,
+    todoId: string,
+    imageUrl: string
+  ): Promise<void> {
     const updateImageParams = {
       TableName: this.todosTable,
       Key: {
+        userId: userId,
         todoId: todoId
       },
       UpdateExpression: 'set attachmentUrl = :imageUrl',

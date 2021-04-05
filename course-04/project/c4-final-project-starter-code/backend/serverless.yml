@@ -16,8 +16,7 @@ provider:
     apiGateway: true
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
-    TODOS_TABLE: TodoTable-${self:provider.stage}
-    TODOS_USERID_INDEX: TodosUserIdIndex
+    TODOS_TABLE: TodosTable-${self:provider.stage}
     TODO_IMAGES_S3_BUCKET: serverless-todo-images-iceng54789-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
 
@@ -33,7 +32,7 @@ custom:
       - name: CreateTodoRequest
         contentType: application/json
         schema: ${file(models/create-todo-request.json)}
-      - name: UpdateTodoList
+      - name: UpdateTodoRequest
         contentType: application/json
         schema: ${file(models/update-todo-request.json)}
 
@@ -52,7 +51,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_USERID_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
@@ -85,7 +84,7 @@ functions:
             summary: update todo item
             description: update todo item
             requestModels:
-              'application/json': UpdateTodoList
+              'application/json': UpdateTodoRequest
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -151,17 +150,12 @@ resources:
           - AttributeName: userId
             AttributeType: S
         KeySchema:
-          - AttributeName: todoId
+          - AttributeName: userId
             KeyType: HASH
+          - AttributeName: todoId
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
-        GlobalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.TODOS_USERID_INDEX}
-            KeySchema:
-              - AttributeName: userId
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
 
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator
