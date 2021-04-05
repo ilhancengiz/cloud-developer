@@ -13,9 +13,9 @@ const logger = createLogger('updateTodo')
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const todoId = event.pathParameters.todoId
-    const todoItem = await getTodoItem(todoId)
-    const isItemExists = !!todoItem
     const userId = getUserId(event)
+    const todoItem = await getTodoItem(userId, todoId)
+    const isItemExists = !!todoItem
 
     if (!isItemExists) {
       logger.error(
@@ -33,25 +33,9 @@ export const handler = middy(
       }
     }
 
-    const todoOwner = todoItem.userId
-
-    if (todoOwner !== userId) {
-      logger.error(
-        `${userId} attempted to delete ${todoId} with owner of ${todoOwner}`
-      )
-      return {
-        statusCode: 403,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Credentials': true
-        },
-        body: 'only owner can delete this item.'
-      }
-    }
-
     const updatedTodo: UpdateTodoRequest = JSON.parse(event.body)
 
-    await updateTodo(todoId, updatedTodo)
+    await updateTodo(userId, todoId, updatedTodo)
 
     return {
       statusCode: 204,

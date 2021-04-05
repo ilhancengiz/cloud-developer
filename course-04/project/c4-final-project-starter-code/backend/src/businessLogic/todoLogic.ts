@@ -11,8 +11,11 @@ export async function getTodosByUser(userId: string): Promise<TodoItem[]> {
   return todoAccess.getTodosByUser(userId)
 }
 
-export async function getTodoItem(todoId: string): Promise<TodoItem> {
-  return todoAccess.getTodoBydId(todoId)
+export async function getTodoItem(
+  userId: string,
+  todoId: string
+): Promise<TodoItem> {
+  return todoAccess.getTodoBydId(userId, todoId)
 }
 
 export async function createTodo(
@@ -32,10 +35,11 @@ export async function createTodo(
 }
 
 export async function updateTodo(
+  userId: string,
   todoId: string,
   updateTodoRequest: UpdateTodoRequest
 ): Promise<void> {
-  return todoAccess.updateTodo(todoId, {
+  return todoAccess.updateTodo(userId, todoId, {
     name: updateTodoRequest.name,
     done: updateTodoRequest.done,
     dueDate: updateTodoRequest.dueDate
@@ -43,12 +47,16 @@ export async function updateTodo(
 }
 
 export async function updateTodoItemImage(
+  userId: string,
   todoId: string,
   imageUrl: string
 ): Promise<void> {
-  return todoAccess.updateTodoItemImage(todoId, imageUrl)
+  return todoAccess.updateTodoItemImage(userId, todoId, imageUrl)
 }
 
-export async function deleteTodo(todoId: string): Promise<void> {
-  return todoAccess.deleteTodo(todoId)
+export async function deleteTodo(
+  userId: string,
+  todoId: string
+): Promise<void> {
+  return todoAccess.deleteTodo(userId, todoId)
 }
