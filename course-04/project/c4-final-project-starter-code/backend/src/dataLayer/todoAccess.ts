@@ -10,12 +10,14 @@ import { TodoUpdate } from '../models/TodoUpdate'
 export class TodoAccess {
   constructor(
     private readonly docClient: DocumentClient = createDynamoDBClient(),
-    private readonly todosTable = process.env.TODOS_TABLE
+    private readonly todosTable = process.env.TODOS_TABLE,
+    private readonly todosUserIdIndex = process.env.TODOS_USERID_INDEX
   ) {}
 
   async getTodosByUser(userId: string): Promise<TodoItem[]> {
     const queryParams = {
       TableName: this.todosTable,
+      IndexName: this.todosUserIdIndex,
       KeyConditionExpression: 'userId = :userId',
       ExpressionAttributeValues: {
         ':userId': userId
